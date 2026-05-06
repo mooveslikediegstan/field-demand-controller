@@ -23,7 +23,7 @@ class Technician:
     def _normalize(self):
         self.technician_name = self.technician_name.strip()
         self.status          = self.status.strip().lower()
-        self.position        = self.position.strip()
+        self.position        = self.position.strip().title()
 
     def _validate(self):
         if not self.technician_name:

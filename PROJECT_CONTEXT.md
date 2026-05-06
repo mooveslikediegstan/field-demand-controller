@@ -323,9 +323,15 @@ Gera o planejamento dia-a-dia da agenda de um técnico.
 
 ## 10. Próximos Passos
 
-1. Criar repositório Git e estrutura de pastas
-2. Criar model `City` com TDD ← **começar aqui**
-3. Criar model `Technician` com TDD
+1. Criar repositório Git e estrutura de pastas [OK]
+2. Criar model `City` com TDD ← **começar aqui** [OK]
+3. Criar model `Technician` com TDD [OK]
+
+## Pendente para próxima sessão
+- Redefinir atributos de `Demand` — regras de causa raiz e setor causador foram alteradas
+- Definir valores válidos para `status` da Demand
+- Definir regras de `responsible` e `actual_time`
+
 4. Criar model `Demand` com TDD (usar `Enum` Python para listas fechadas)
 5. Criar model `ServiceOrder` com TDD
 6. Criar model `OrderManager` com TDD
@@ -337,6 +343,4 @@ Gera o planejamento dia-a-dia da agenda de um técnico.
 12. Configurar Docker Compose
 13. Criar interface Streamlit
 
----
 
-*Gerado em: 06/05/2026 — análise inicial do VBA, nenhum código Python escrito ainda*

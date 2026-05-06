@@ -53,6 +53,10 @@ def test_all_valid_positions_are_accepted(valid_technician):
         technician = make_technician(valid_technician, position=position)
         assert technician.position == position
 
+def test_lowercase_position_is_normalized(valid_technician):
+    technician = make_technician(valid_technician, position="lider")
+    assert technician.position == "Lider"
+
 # --- dismiss_date ---
 
 def test_inactive_technician_with_dismiss_date_is_accepted(valid_technician):
