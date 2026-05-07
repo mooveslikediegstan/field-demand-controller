@@ -90,7 +90,7 @@ agenda-tecnica/
 │       │   ├── analyst.py               [ TODO ]
 │       │   ├── technician.py            
 │       │   ├── demand.py                
-│       │   ├── demand_manager.py         [ TODO ]
+│       │   ├── demand_manager.py        
 │       │   ├── demand_queue.py           [ TODO ]
 │       │   └── schedule_planner.py      [ TODO ]
 │       ├── database/
@@ -114,7 +114,7 @@ agenda-tecnica/
     ├── test_analyst.py                  [ TODO ]
     ├── test_technician.py               
     ├── test_demand.py                   
-    ├── test_demand_manager.py            [ TODO ]
+    ├── test_demand_manager.py           
     ├── test_demand_queue.py              [ TODO ]
     └── test_schedule_planner.py         [ TODO ]
 ```
@@ -241,7 +241,7 @@ Ponto de entrada do fluxo principal.
 Conforme hierarquia criada com dicionário dentro da classe Demand.
 
 
-### `DemandManager` [ TODO ] — tabela `DMD_MGMT`
+### `DemandManager` — tabela `DMD_MGMT`
 Referencia `Demand` diretamente — `ServiceOrder` eliminado por simplicidade.
 Implementa linked-list para ordenação da fila por técnico.
 
@@ -249,7 +249,7 @@ Implementa linked-list para ordenação da fila por técnico.
 |---|---|---|---|
 | `demand_id` | `int` | Sim | FK para Demand |
 | `technician_id` | `int` | Sim | FK para Technician |
-| `next_demand_id` | `Optional[int]` | Não | None = último da fila |
+| `next_demand_manager_id` | `Optional[int]` | Não | None = último da fila |
 | `start_date` | `Optional[date]` | Não | Após execução |
 | `finish_date` | `Optional[date]` | Não | Após execução |
 | `travel_time` | `Optional[float]` | Não | Calculado pelo planejador |
@@ -259,9 +259,9 @@ Implementa linked-list para ordenação da fila por técnico.
 | `demand_manager_id` | `Optional[int]` | Não | Auto-gerado pelo banco |
 
 **Arquitetura linked-list:**
-- `next_demand_id = None` → último da fila (tail)
+- `next_demand_manager_id = None` → último da fila (tail)
 - Reordenação: `sort()` reconstrói ordem a partir dos links
-- `rebuild_links()` recalcula `next_order_id` após reordenação
+- `rebuild_links()` recalcula `next_demand_manager_id` após reordenação
 
 ### `DemandQueue` [ TODO ] — objeto de domínio (não é tabela)
 | Campo | Tipo Python | Descrição |
@@ -349,17 +349,16 @@ Gera o planejamento dia-a-dia da agenda de um técnico.
 2. Criar model `City` com TDD ← **começar aqui** [OK]
 3. Criar model `Technician` com TDD [OK]
 4. Criar model `Demand` com TDD (usar `Enum` Python para listas fechadas) [OK]
-5. Criar model `ServiceOrder` com TDD
-6. Criar model `OrderManager` com TDD
-7. Implementar `OrderQueue.sort()` com TDD — algoritmo linked-list
-8. Implementar `SchedulePlanner` com TDD — algoritmo mais complexo
-9. Criar model `Project` com TDD
-10. Criar model `Customer` com TDD
-11. Criar model `Analyst` com TDD
-12. Criar ORM models + SQLAlchemy + PostgreSQL
-13. Implementar Repositories e Services
-14. Criar rotas FastAPI
-15. Configurar Docker Compose
-16. Criar interface Streamlit
+5. Criar model `OrderManager` com TDD
+6. Implementar `OrderQueue.sort()` com TDD — algoritmo linked-list
+7. Implementar `SchedulePlanner` com TDD — algoritmo mais complexo
+8. Criar model `Project` com TDD
+9. Criar model `Customer` com TDD
+10. Criar model `Analyst` com TDD
+11. Criar ORM models + SQLAlchemy + PostgreSQL
+12. Implementar Repositories e Services
+13. Criar rotas FastAPI
+14. Configurar Docker Compose
+15. Criar interface Streamlit
 
 
