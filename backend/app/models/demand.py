@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from dataclasses import dataclass
 from typing import Optional
 from datetime import date
@@ -50,7 +52,7 @@ PROBLEM_HIERARCHY = {
     }
 }
 
-DEMAND_STATUS = ["Aberta", "Em Andamento", "Concluida", "Cancelada"]
+DEMAND_STATUS = ["Aberta", "Em Andamento", "Concluída", "Cancelada"]
 
 VALID_EQUIPMENTS = ["Secador / Fornalha","Máquina de Limpeza","Elevadores Agrícolas",
                     "Transportadores de Correia","Transportadores Helicoidais","Transportadores de Corrente",
@@ -58,8 +60,8 @@ VALID_EQUIPMENTS = ["Secador / Fornalha","Máquina de Limpeza","Elevadores Agrí
                     "Silos Planos / Elevados / Expedição / Aeração","Tulhas Metálicas","Hi Roller / Hi Life",
                     "Temp Stor","Batco"]
 
-VALID_TECHNICAL_REASONS = ["Instalacao", "Manutencao Corretiva", "Manutencao Preventiva",
-                           "Punch-list", "Reforma", "Teste","Verificação", "Visita Tecnica", "Outro"]
+VALID_TECHNICAL_REASONS = ["Instalação", "Manutenção Corretiva", "Manutenção Preventiva",
+                           "Punch-list", "Reforma", "Teste","Verificação", "Visita Técnica", "Outro"]
 
 
 @dataclass
@@ -93,7 +95,7 @@ class Demand:
         self.causal_sector         = self.causal_sector.strip()
         self.causal_area           = self.causal_area.strip()
         self.root_cause           = self.root_cause.strip()
-        self.equipment            = self.equipment.strip().title()
+        self.equipment            = self.equipment.strip()
     
     def _validate(self):
         if not self.demand_title:
