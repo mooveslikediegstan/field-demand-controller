@@ -1,4 +1,4 @@
-# AgGrowth — Gestão de Agenda Técnica
+# Gestão de Agenda Técnica
 > Arquivo de contexto para agentes de IA. Gerado em 06/05/2026.
 > Itens marcados com `[ TODO ]` ainda não foram definidos e devem ser preenchidos nas próximas sessões.
 > Convenção: nomes de código em inglês, mensagens de erro em português.
@@ -84,13 +84,14 @@ agenda-tecnica/
 │   └── app/
 │       ├── main.py                      [ TODO ]
 │       ├── models/
-│       │   ├── city.py                  [ TODO ]
+│       │   ├── city.py                  
 │       │   ├── customer.py              [ TODO ]
 │       │   ├── project.py               [ TODO ]
-│       │   ├── technician.py            [ TODO ]
-│       │   ├── demand.py                [ TODO ]
-│       │   ├── order_manager.py         [ TODO ]
-│       │   ├── order_queue.py           [ TODO ]
+│       │   ├── analyst.py               [ TODO ]
+│       │   ├── technician.py            
+│       │   ├── demand.py                
+│       │   ├── demand_manager.py         [ TODO ]
+│       │   ├── demand_queue.py           [ TODO ]
 │       │   └── schedule_planner.py      [ TODO ]
 │       ├── database/
 │       │   ├── session.py               [ TODO ]
@@ -107,14 +108,14 @@ agenda-tecnica/
 │   └── app/
 │       └── main.py                      [ TODO ]
 └── tests/
-    ├── test_city.py                     [ TODO ]
+    ├── test_city.py                     
     ├── test_customer.py                 [ TODO ]
     ├── test_project.py                  [ TODO ]
-    ├── test_technician.py               [ TODO ]
-    ├── test_demand.py                   [ TODO ]
-    ├── test_service_order.py            [ TODO ]
-    ├── test_order_manager.py            [ TODO ]
-    ├── test_order_queue.py              [ TODO ]
+    ├── test_analyst.py                  [ TODO ]
+    ├── test_technician.py               
+    ├── test_demand.py                   
+    ├── test_demand_manager.py            [ TODO ]
+    ├── test_demand_queue.py              [ TODO ]
     └── test_schedule_planner.py         [ TODO ]
 ```
 
@@ -144,7 +145,7 @@ agenda-tecnica/
 
 ## 6. Models — Mapeamento VBA → Python
 
-### `City` [ TODO ] — tabela `CITY`
+### `City` — tabela `CITY`
 | Campo | Tipo Python | Obrigatório | Regras |
 |---|---|---|---|
 | `city_id` | `int` | Sim | Auto-gerado |
@@ -178,7 +179,12 @@ agenda-tecnica/
 | `site_location_lon` | `float` | [ TODO ] | Entre -180 e 180 |
 | `address` | `str` | [ TODO ] | — |
 
-### `Technician` [ TODO ] — tabela `TECH`
+### `Analyst` [ TODO ] — tabela `ANL`
+| Campo | Tipo Python | Obrigatório | Regras |
+|---|---|---|---|
+Definição de campos pendentes
+
+### `Technician` — tabela `TECH`
 | Campo | Tipo Python | Obrigatório | Regras |
 |---|---|---|---|
 | `technician_id` | `int` | Sim | Auto-gerado |
@@ -191,35 +197,51 @@ agenda-tecnica/
 | `current_location_city_id` | `int` | Sim | FK para City |
 | `daily_capacity` | `float` | Sim | Horas disponíveis/dia |
 
-### `Demand` [ TODO ] — tabela `DMD`
+### `Demand` — tabela `DMD`
 Ponto de entrada do fluxo principal.
 
 | Campo | Tipo Python | Obrigatório | Regras |
 |---|---|---|---|
 | `demand_id` | `int` | Sim | Auto-gerado |
 | `request_date` | `date` | Sim | — |
-| `responsible` | `str` | Sim | Analista |
+| `responsible_id` | `int` | Sim | FK para Analyst |
 | `project_id` | `str` | Sim | FK para Project |
-| `classification` | `str` | Sim | Lista fechada (ver abaixo) |
 | `estimated_time` | `float` | Sim | Horas estimadas |
 | `actual_time` | `Optional[float]` | Não | Preenchido após execução |
 | `problem_description` | `str` | Sim | Não vazio |
+| `demand_title` | `str` | Sim | Não vazio |
 | `technical_visit_reason` | `str` | Sim | Lista fechada (ver abaixo) |
-| `root_cause_area` | `str` | [ TODO ] | Lista fechada |
-| `equipment` | `str` | [ TODO ] | — |
-| `status` | `str` | Sim | [ TODO ] valores válidos |
+| `causal_sector` | `str` | Sim | Lista fechada |
+| `causal_area` | `str` | Sim | Lista fechada |
+| `root_cause` | `str` | Sim | Lista fechada |
+| `equipment` | `str` | Sim | Lista fechada |
+| `status` | `str` | Sim | Lista fechada |
 
-**Valores válidos — `classification`:**
-`"Assistência Técnica"`, `"Folga de Campo"`, `"Visita Comercial"`, `"Visita Preventiva"`, `"Entrega Técnica"`
+**Valores válidos — `status`:**
+`"Aberta"`, `"Em Andamento"`, `"Concluída"`, `"Cancelada"`
+
+**Valores válidos — `equipment`:**
+`"Secador / Fornalha"`,`"Máquina de Limpeza"`,`"Elevadores Agrícolas"`,
+`"Transportadores de Correia"`,`"Transportadores Helicoidais"`,
+`"Transportadores de Corrente"`,`"Canalização"`,`"Passarela / Torres"`,
+`"Rosca Varredora"`,`"Silos Planos / Elevados / Expedição / Aeração"`,
+`"Tulhas Metálicas"`,`"Hi Roller / Hi Life"`,`"Temp Stor"`,`"Batco"`
 
 **Valores válidos — `technical_visit_reason`:**
-`"Acompanhamento Atividade"`, `"Administrativo"`, `"Atestado Médico"`, `"Comercial"`, `"Falha Operacional"`, `"Garantia"`, `"Inspeção / Verificação"`, `"Instalação / Ajuste"`, `"Manutenção Corretiva"`, `"Manutenção Preventiva"`, `"Orientação / Treinamento"`, `"Punchlist / Entrega Técnica"`, `"Quebra de Componente"`, `"Start-up Equipamento"`
+`"Instalação"`, `"Manutenção Corretiva"`, `"Manutenção Preventiva"`,
+`"Punch-list"`, `"Reforma"`, `"Teste"`,`"Verificação"`, `"Visita Técnica"`, `"Outro"`
 
-**Valores válidos — `root_cause_area`:**
-`"Assistência Técnica"`, `"Cliente"`, `"Comercial"`, `"Engenharia"`, `"Fornecedor"`, `"Logística"`
+**Valores válidos — `causal_sector`:**
+`"Assistência Técnica"`, `"Comercial"`,`"Compras"` `"Engenharia"`, `"Fornecedor"`, `"Logística"`,`"Manufatura"`,`"Montagem"`
+
+**Valores válidos — `causal_area`:**
+`"Assistência Técnica"`, `"Comercial - Peças"`,`"Comercial - Projetos"` `"Engenharia de Aplicação"`, `"Engenharia de Produto"`, `"Fornecedor"`,`"Embarque e Transporte"`,`"Preparação"`,`"Recebimento"`, `"Corte e Dobra"`,`"Montagem Final"` `"Pintura"`, `"Silo"`, `"Solda"`,`"Usinagem"`,`"Montagem AGI"`,`"Montagem Cliente"`,`"Supervisão AGI"`
+
+**Valores válidos — `root_cause`:**
+Conforme hierarquia criada com dicionário dentro da classe Demand.
 
 
-### `OrderManager` [ TODO ] — tabela `ORD_MGMT`
+### `DemandManager` [ TODO ] — tabela `DMD_MGMT`
 Referencia `Demand` diretamente — `ServiceOrder` eliminado por simplicidade.
 Implementa linked-list para ordenação da fila por técnico.
 
@@ -227,34 +249,34 @@ Implementa linked-list para ordenação da fila por técnico.
 |---|---|---|---|
 | `demand_id` | `int` | Sim | FK para Demand |
 | `technician_id` | `int` | Sim | FK para Technician |
-| `next_order_id` | `Optional[int]` | Não | None = último da fila |
+| `next_demand_id` | `Optional[int]` | Não | None = último da fila |
 | `start_date` | `Optional[date]` | Não | Após execução |
 | `finish_date` | `Optional[date]` | Não | Após execução |
 | `travel_time` | `Optional[float]` | Não | Calculado pelo planejador |
 | `travel_distance` | `Optional[float]` | Não | Calculado pelo planejador |
 | `status` | `str` | Sim | [ TODO ] valores válidos |
 | `is_deleted` | `bool` | Sim | Soft delete, default False |
-| `order_manager_id` | `Optional[int]` | Não | Auto-gerado pelo banco |
+| `demand_manager_id` | `Optional[int]` | Não | Auto-gerado pelo banco |
 
 **Arquitetura linked-list:**
 - `next_demand_id = None` → último da fila (tail)
 - Reordenação: `sort()` reconstrói ordem a partir dos links
 - `rebuild_links()` recalcula `next_order_id` após reordenação
 
-### `OrderQueue` [ TODO ] — objeto de domínio (não é tabela)
+### `DemandQueue` [ TODO ] — objeto de domínio (não é tabela)
 | Campo | Tipo Python | Descrição |
 |---|---|---|
 | `technician_id` | `int` | Técnico dono da fila |
-| `orders` | `list[OrderManager]` | Lista ordenada (head = próxima execução) |
+| `demands` | `list[DemandManager]` | Lista ordenada (head = próxima execução) |
 
 Métodos a implementar:
-- `sort()` — reconstrói ordem correta via links (≈ `SortOrderSequence()` VBA)
-- `rebuild_links()` — recalcula `next_order_id` após reordenação (≈ `RebuildLinks()` VBA)
+- `sort()` — reconstrói ordem correta via links (≈ `SortDemandSequence()` VBA)
+- `rebuild_links()` — recalcula `next_demand_id` após reordenação (≈ `RebuildLinks()` VBA)
 
 ### `ScheduleItem` [ TODO ] — objeto de domínio (não é tabela)
 | Campo | Tipo Python | Descrição |
 |---|---|---|
-| `order_id` | `int` | FK para OrderManager |
+| `demand_id` | `int` | FK para DemandManager |
 | `technician_id` | `int` | FK para Technician |
 | `scheduled_date` | `date` | Data planejada |
 | `action` | `str` | Tipo de ação |
@@ -290,10 +312,10 @@ Gera o planejamento dia-a-dia da agenda de um técnico.
 | `CUSTOMER` | `Customer` | Clientes |
 | `PROJECT` | `Project` | Projetos por cliente/cidade |
 | `TECH` | `Technician` | Técnicos de campo |
-| `ANL` | `[ TODO ]` | Analistas — ainda não mapeado |
+| `ANL` | `Analyst` | Analistas |
 | `DMD` | `Demand` | Demandas técnicas |
-| `SERVORD` | `ServiceOrder` | Ordens de serviço |
-| `ORD_MGMT` | `OrderManager` | Fila de execução (linked-list) |
+| `SERVORD` | `ServiceOrder` | Ordens de serviço | (Excluído por decisão de design)
+| `DMD_MGMT` | `DemandManager` | Fila de execução (linked-list) |
 
 ---
 
@@ -301,8 +323,8 @@ Gera o planejamento dia-a-dia da agenda de um técnico.
 
 ```
 1. Analista cadastra Demand
-2. Analista cria ServiceOrder → atribui técnicos
-3. Para cada técnico: cria OrderManager → ordem vai ao final da fila
+2. Analista atribui Demand a técnicos
+3. Para cada técnico: cria DemandManager → demanda vai ao final da fila
 4. Analista reordena fila via AgendaManager → RebuildLinks recalcula links
 5. Sistema gera planejamento dia-a-dia via SchedulePlanner
 ```
@@ -315,10 +337,10 @@ Gera o planejamento dia-a-dia da agenda de um técnico.
 |---|---|
 | PostgreSQL obrigatório | 2-8 usuários simultâneos — SQLite não suporta concorrência de escrita |
 | Fila como linked-list | Mantém arquitetura do VBA — permite reordenação eficiente |
-| `OrderQueue` e `SchedulePlanner` como objetos de domínio | Construídos em memória — não persistidos diretamente |
+| `DemandQueue` e `SchedulePlanner` como objetos de domínio | Construídos em memória — não persistidos diretamente |
 | Soft delete (`is_deleted`) | Mantém histórico — padrão do sistema legado |
 | Nomes de código em inglês, mensagens em português | Consistência com projeto anterior |
-| `ServiceOrder` eliminado | Não agregava valor — `OrderManager` referencia `Demand` diretamente; múltiplos técnicos = múltiplos registros no `ORD_MGMT` |
+| `ServiceOrder` eliminado | Não agregava valor — `DemandManager` referencia `Demand` diretamente; múltiplos técnicos = múltiplos registros no `DMD_MGMT` |
 ---
 
 ## 10. Próximos Passos
@@ -326,21 +348,18 @@ Gera o planejamento dia-a-dia da agenda de um técnico.
 1. Criar repositório Git e estrutura de pastas [OK]
 2. Criar model `City` com TDD ← **começar aqui** [OK]
 3. Criar model `Technician` com TDD [OK]
-
-## Pendente para próxima sessão
-- Redefinir atributos de `Demand` — regras de causa raiz e setor causador foram alteradas
-- Definir valores válidos para `status` da Demand
-- Definir regras de `responsible` e `actual_time`
-
-4. Criar model `Demand` com TDD (usar `Enum` Python para listas fechadas)
+4. Criar model `Demand` com TDD (usar `Enum` Python para listas fechadas) [OK]
 5. Criar model `ServiceOrder` com TDD
 6. Criar model `OrderManager` com TDD
 7. Implementar `OrderQueue.sort()` com TDD — algoritmo linked-list
 8. Implementar `SchedulePlanner` com TDD — algoritmo mais complexo
-9. Criar ORM models + SQLAlchemy + PostgreSQL
-10. Implementar Repositories e Services
-11. Criar rotas FastAPI
-12. Configurar Docker Compose
-13. Criar interface Streamlit
+9. Criar model `Project` com TDD
+10. Criar model `Customer` com TDD
+11. Criar model `Analyst` com TDD
+12. Criar ORM models + SQLAlchemy + PostgreSQL
+13. Implementar Repositories e Services
+14. Criar rotas FastAPI
+15. Configurar Docker Compose
+16. Criar interface Streamlit
 
 
