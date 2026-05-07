@@ -50,7 +50,7 @@ PROBLEM_HIERARCHY = {
     }
 }
 
-DEMAND_STATUS = ["Aberta", "Em Andamento","Concluida", "Fechada"]
+DEMAND_STATUS = ["Aberta", "Em Andamento", "Concluida", "Cancelada"]
 
 VALID_EQUIPMENTS = ["Secador / Fornalha","Máquina de Limpeza","Elevadores Agrícolas",
                     "Transportadores de Correia","Transportadores Helicoidais","Transportadores de Corrente",
@@ -89,10 +89,10 @@ class Demand:
         self.problem_description   = self.problem_description.strip()
         self.project_id            = self.project_id.strip()
         self.status                = self.status.strip().title()
-        self.technical_visit_reason = self.technical_visit_reason.strip().title()
-        self.causal_sector         = self.causal_sector.strip().title()
-        self.causal_area           = self.causal_area.strip().title()
-        self.root_cause           = self.root_cause.strip().title()
+        self.technical_visit_reason = self.technical_visit_reason.strip()
+        self.causal_sector         = self.causal_sector.strip()
+        self.causal_area           = self.causal_area.strip()
+        self.root_cause           = self.root_cause.strip()
         self.equipment            = self.equipment.strip().title()
     
     def _validate(self):

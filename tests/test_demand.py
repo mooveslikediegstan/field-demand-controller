@@ -41,7 +41,7 @@ def test_invalid_status_should_fail(valid_demand):
         make_demand(valid_demand, status="Pendente")
 
 def test_all_valid_statuses_are_accepted(valid_demand):
-    for status in ["Aberta", "Em execucao", "Concluida", "Cancelada"]:
+    for status in ["Aberta", "Em Andamento", "Concluida", "Cancelada"]:
         demand = make_demand(valid_demand, status=status)
         assert demand.status == status
 
@@ -73,7 +73,7 @@ def test_actual_time_valid_is_accepted(valid_demand):
 
 def test_invalid_technical_visit_reason_should_fail(valid_demand):
     with pytest.raises(ValueError, match="Motivo da visita invalido"):
-        make_demand(valid_demand, technical_visit_reason="Outro")
+        make_demand(valid_demand, technical_visit_reason="Qualquer motivo")
 
 def test_empty_technical_visit_reason_should_fail(valid_demand):
     with pytest.raises(ValueError, match="Motivo da visita nao pode ser vazio"):
@@ -107,11 +107,11 @@ def test_valid_hierarchy_is_accepted(valid_demand):
     demand = make_demand(
         valid_demand,
         causal_sector="Engenharia",
-        causal_area="Engenharia de produto",
+        causal_area="Engenharia de Produto",
         root_cause="Melhoria de Produto"
     )
     assert demand.causal_sector == "Engenharia"
-    assert demand.causal_area == "Engenharia de produto"
+    assert demand.causal_area == "Engenharia de Produto"
     assert demand.root_cause == "Melhoria de Produto"
 
 # --- campos obrigatorios ---
@@ -129,6 +129,21 @@ def test_demand_title_empty_should_fail(valid_demand):
         make_demand(valid_demand, demand_title="")
 
 def main():
-    test_demand_created_with_valid_fields(make_demand(valid_demand()))
+    test_demand_created_with_valid_fields(
+        Demand(
+            request_date=date(2026, 5, 6),
+            responsible_id=1,
+            project_id="PROJ-001",
+            estimated_time=36.0,
+            demand_title="Falha no acionamento do elevador",
+            problem_description="Equipamento com falha no acionamento",
+            technical_visit_reason="Manutencao Corretiva",
+            causal_sector="Fornecedor",
+            causal_area="Fornecedor",
+            root_cause="Atraso na entrega",
+            equipment="Elevadores Agrícolas",
+            status="Aberta"
+        )
+    )
 
 main()
