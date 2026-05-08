@@ -263,13 +263,14 @@ Implementa linked-list para ordenação da fila por técnico.
 - Reordenação: `sort()` reconstrói ordem a partir dos links
 - `rebuild_links()` recalcula `next_demand_manager_id` após reordenação
 
-### `DemandQueue` [ TODO ] — objeto de domínio (não é tabela)
+### `DemandQueue` — objeto de domínio (não é tabela)
 | Campo | Tipo Python | Descrição |
 |---|---|---|
 | `technician_id` | `int` | Técnico dono da fila |
+| `head_id` | `int` |  ← ID do primeiro a executar
 | `demands` | `list[DemandManager]` | Lista ordenada (head = próxima execução) |
 
-Métodos a implementar:
+Métodos:
 - `sort()` — reconstrói ordem correta via links (≈ `SortDemandSequence()` VBA)
 - `rebuild_links()` — recalcula `next_demand_id` após reordenação (≈ `RebuildLinks()` VBA)
 
