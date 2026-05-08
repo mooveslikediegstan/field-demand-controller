@@ -36,5 +36,3 @@ class Analyst:
             raise ValueError("Status invalido")
         if self.valid_to_date and self.valid_to_date <= self.creation_date:
             raise ValueError("Data de validade nao pode ser anterior")
-        if self.valid_to_date and self.valid_to_date <= self.creation_date and self.status == "inactive":
-            raise ValueError("Data de validade nao pode ser anterior")

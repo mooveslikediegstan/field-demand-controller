@@ -84,9 +84,9 @@ field-demand-controller/
 │       │   ├── schedule_item.py         ✅
 │       │   ├── schedule_planner.py      ✅
 │       │   ├── geo_utils.py             ✅
-│       │   ├── customer.py              [ TODO ]
-│       │   ├── project.py               [ TODO ]
-│       │   └── analyst.py               [ TODO ]
+│       │   ├── customer.py              ✅
+│       │   ├── project.py               ✅
+│       │   └── analyst.py               ✅
 │       ├── database/
 │       │   ├── session.py               [ TODO ]
 │       │   ├── orm_models.py            [ TODO ]
@@ -109,9 +109,9 @@ field-demand-controller/
     ├── test_demand_queue.py             ✅
     ├── test_geo_utils.py                ✅
     ├── test_schedule_planner.py         ✅
-    ├── test_customer.py                 [ TODO ]
-    ├── test_project.py                  [ TODO ]
-    └── test_analyst.py                  [ TODO ]
+    ├── test_customer.py                 ✅
+    ├── test_project.py                  ✅
+    └── test_analyst.py                  ✅
 ```
 
 ---
@@ -344,9 +344,9 @@ Campos a definir na próxima sessão.
 6. ✅ `DemandQueue` com TDD
 7. ✅ `geo_utils` com TDD
 8. ✅ `SchedulePlanner` com TDD
-9. Criar `Customer` com TDD ← **próxima sessão começa aqui**
-10. Criar `Project` com TDD
-11. Criar `Analyst` com TDD
+9. ✅ `Customer` com TDD
+10. ✅ `Project` com TDD
+11. ✅ `Analyst` com TDD
 12. Criar ORM models + SQLAlchemy + PostgreSQL
 13. Implementar Repositories e Services (incluindo `ScheduleService`)
 14. Criar rotas FastAPI
