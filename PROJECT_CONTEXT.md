@@ -174,10 +174,6 @@ agenda-tecnica/
 | `project_id` | `str` | Sim | Não vazio |
 | `project_name` | `str` | Sim | Não vazio |
 | `customer_id` | `str` | Sim | FK para Customer |
-| `city_id` | `int` | Sim | FK para City |
-| `site_location_lat` | `float` | [ TODO ] | Entre -90 e 90 |
-| `site_location_lon` | `float` | [ TODO ] | Entre -180 e 180 |
-| `address` | `str` | [ TODO ] | — |
 
 ### `Analyst` [ TODO ] — tabela `ANL`
 | Campo | Tipo Python | Obrigatório | Regras |
@@ -285,6 +281,17 @@ Métodos:
 | `work_time` | `float` | Tempo de trabalho em horas |
 | `sequence_position` | `int` | Posição na sequência do dia |
 
+`ScheduleInput` — objeto de domínio (não é tabela)
+Dados já resolvidos pelo Service antes de entregar ao SchedulePlanner.
+
+| Campo | Tipo Python | Descrição |
+|---|---|---|
+| `demand_manager_id` | `int` | ID do registro na fila |
+| `demand_id` | `int` | FK para Demand |
+| `estimated_time` | `float` | Horas de trabalho |
+| `city_lat` | `float` | Latitude do local — resolvida via Demand → Project → Customer → City |
+| `city_lon` | `float` | Longitude do local — resolvida via Demand → Project → Customer → City |
+
 ### `SchedulePlanner` [ TODO ] — objeto de domínio mais complexo
 Gera o planejamento dia-a-dia da agenda de um técnico.
 
@@ -342,6 +349,7 @@ Gera o planejamento dia-a-dia da agenda de um técnico.
 | Soft delete (`is_deleted`) | Mantém histórico — padrão do sistema legado |
 | Nomes de código em inglês, mensagens em português | Consistência com projeto anterior |
 | `ServiceOrder` eliminado | Não agregava valor — `DemandManager` referencia `Demand` diretamente; múltiplos técnicos = múltiplos registros no `DMD_MGMT` |
+| `SchedulePlanner` recebe `ScheduleInput` resolvido | Planejador não conhece a cadeia Demand → Project → Customer → City — responsabilidade do Service |
 ---
 
 ## 10. Próximos Passos
