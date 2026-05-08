@@ -11,7 +11,7 @@ Sistema de **gestão de demandas técnicas e agendamento de técnicos de campo**
 
 O sistema gerencia o ciclo completo de uma demanda técnica:
 ```
-Demanda (DMD) → Ordem de Serviço (SERVORD) → Fila do Técnico (ORD_MGMT) → Agenda Planejada
+Demanda (DMD) → Fila do Técnico (DMD_MGMT) → Agenda Planejada
 ```
 
 Principais funcionalidades:
@@ -91,7 +91,7 @@ agenda-tecnica/
 │       │   ├── technician.py            
 │       │   ├── demand.py                
 │       │   ├── demand_manager.py        
-│       │   ├── demand_queue.py           [ TODO ]
+│       │   ├── demand_queue.py          
 │       │   └── schedule_planner.py      [ TODO ]
 │       ├── database/
 │       │   ├── session.py               [ TODO ]
@@ -115,7 +115,7 @@ agenda-tecnica/
     ├── test_technician.py               
     ├── test_demand.py                   
     ├── test_demand_manager.py           
-    ├── test_demand_queue.py              [ TODO ]
+    ├── test_demand_queue.py             
     └── test_schedule_planner.py         [ TODO ]
 ```
 
@@ -254,7 +254,7 @@ Implementa linked-list para ordenação da fila por técnico.
 | `finish_date` | `Optional[date]` | Não | Após execução |
 | `travel_time` | `Optional[float]` | Não | Calculado pelo planejador |
 | `travel_distance` | `Optional[float]` | Não | Calculado pelo planejador |
-| `status` | `str` | Sim | [ TODO ] valores válidos |
+| `status` | `str` | Sim | valores válidos |
 | `is_deleted` | `bool` | Sim | Soft delete, default False |
 | `demand_manager_id` | `Optional[int]` | Não | Auto-gerado pelo banco |
 
@@ -350,8 +350,8 @@ Gera o planejamento dia-a-dia da agenda de um técnico.
 2. Criar model `City` com TDD ← **começar aqui** [OK]
 3. Criar model `Technician` com TDD [OK]
 4. Criar model `Demand` com TDD (usar `Enum` Python para listas fechadas) [OK]
-5. Criar model `OrderManager` com TDD
-6. Implementar `OrderQueue.sort()` com TDD — algoritmo linked-list
+5. Criar model `DemandManager` com TDD [OK]
+6. Implementar `DemandQueue.sort()` com TDD — algoritmo linked-list [OK]
 7. Implementar `SchedulePlanner` com TDD — algoritmo mais complexo
 8. Criar model `Project` com TDD
 9. Criar model `Customer` com TDD
