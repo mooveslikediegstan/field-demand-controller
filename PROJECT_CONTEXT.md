@@ -113,8 +113,9 @@ field-demand-controller/
 │       │   ├── init_db.py               ✅
 │       │   └── repository.py            ✅ (atualizado com 4 novos repositories)
 │       ├── services/
-│       │   ├── demand_service.py        [ TODO ]
-│       │   └── schedule_service.py      [ TODO ]
+│       │   ├── demand_service.py        ✅
+│       │   └── execution_service.py      ✅
+│       │   └── schedule_service.py      ✅
 │       ├── routers/                     [ TODO ]
 │       └── schemas/                     [ TODO ]
 ├── frontend/
@@ -382,11 +383,25 @@ Todos seguem padrão: fixture `valid_*`, helper `make_*`, uma asserção por tes
 9. ✅ ExecutionService + ExecutionInput — testes passando
 
 1. **Rotas FastAPI**
-   - `POST /api/technicians/{tech_id}/save-sequence` → triggers planejamento
-   - `GET /api/technicians/{tech_id}/schedule` → retorna schedule_gantt
-   - `GET /api/technicians/{tech_id}/planning` → retorna schedule_item
-   - `POST /api/demands/{dm_id}/conclude` → abre tela de execução
-   - `POST /api/execution-logs/` → salva horas reais
+
+**Demandas**
+| Ação | Rota |
+|---|---|
+| Criar demanda | `POST /api/demands/` |
+| Atualizar demanda | `PUT /api/demands/{demand_id}` |
+| Excluir demanda | `DELETE /api/demands/{demand_id}` |
+| Alocar técnico | `POST /api/demands/{demand_id}/allocate` |
+| Desalocar técnico | `DELETE /api/demands/{demand_id}/allocate/{technician_id}` |
+| Buscar dados tela de conclusão | `GET /api/demands/{dm_id}/conclusion-data` |
+| Concluir ordem | `POST /api/demands/{dm_id}/conclude` |
+
+**Técnicos / Agenda**
+| Ação | Rota |
+|---|---|
+| Listar fila do técnico | `GET /api/technicians/{tech_id}/queue` |
+| Salvar sequência | `POST /api/technicians/{tech_id}/save-sequence` |
+| Visualizar Gantt | `GET /api/technicians/{tech_id}/schedule` |
+
 
 2. **Schemas Pydantic**
    - Request/response para cada rota
