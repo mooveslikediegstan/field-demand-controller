@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-from sqlalchemy import Column, Integer, String, Float, Date, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Date, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from backend.app.database.session import Base
+from datetime import datetime
 
 
 class CityORM(Base):
@@ -70,6 +71,7 @@ class TechnicianORM(Base):
     base_city                 = relationship("CityORM", foreign_keys=[base_location_city_id])
     current_city              = relationship("CityORM", foreign_keys=[current_location_city_id])
     demand_managers           = relationship("DemandManagerORM", back_populates="technician")
+    planning_versions         = relationship("PlanningVersionORM", back_populates="technician")
 
 
 class DemandORM(Base):
@@ -111,3 +113,67 @@ class DemandManagerORM(Base):
 
     demand                  = relationship("DemandORM", back_populates="demand_managers")
     technician              = relationship("TechnicianORM", back_populates="demand_managers")
+    execution_logs          = relationship("ExecutionLogORM", back_populates="demand_manager")
+
+
+# ── PLANNING VERSION ──────────────────────────────────────────────────────────
+
+class PlanningVersionORM(Base):
+    __tablename__ = "planning_version"
+
+    version_id              = Column(Integer, primary_key=True, autoincrement=True)
+    technician_id           = Column(Integer, ForeignKey("technician.technician_id"), nullable=False)
+    created_at              = Column(DateTime, nullable=False, default=datetime.utcnow)
+    is_active               = Column(Boolean, nullable=False, default=True)
+
+    technician              = relationship("TechnicianORM", back_populates="planning_versions")
+    schedule_items          = relationship("ScheduleItemORM", back_populates="planning_version")
+    schedule_gantt_items    = relationship("ScheduleGanttORM", back_populates="planning_version")
+
+
+# ── SCHEDULE ITEM ─────────────────────────────────────────────────────────────
+
+class ScheduleItemORM(Base):
+    __tablename__ = "schedule_item"
+
+    schedule_item_id        = Column(Integer, primary_key=True, autoincrement=True)
+    version_id              = Column(Integer, ForeignKey("planning_version.version_id"), nullable=False)
+    demand_manager_id       = Column(Integer, ForeignKey("demand_manager.demand_manager_id"), nullable=False)
+    technician_id           = Column(Integer, ForeignKey("technician.technician_id"), nullable=False)
+    scheduled_date          = Column(Date, nullable=False)
+    action                  = Column(String, nullable=False)
+    worked_hours            = Column(Float, nullable=False)
+    distance                = Column(Integer, nullable=False, default=0)
+
+    planning_version        = relationship("PlanningVersionORM", back_populates="schedule_items")
+
+
+# ── SCHEDULE GANTT ────────────────────────────────────────────────────────────
+
+class ScheduleGanttORM(Base):
+    __tablename__ = "schedule_gantt"
+
+    schedule_gantt_id       = Column(Integer, primary_key=True, autoincrement=True)
+    version_id              = Column(Integer, ForeignKey("planning_version.version_id"), nullable=False)
+    demand_manager_id       = Column(Integer, ForeignKey("demand_manager.demand_manager_id"), nullable=False)
+    technician_id           = Column(Integer, ForeignKey("technician.technician_id"), nullable=False)
+    start_date              = Column(Date, nullable=False)
+    finish_date             = Column(Date, nullable=False)
+
+    planning_version        = relationship("PlanningVersionORM", back_populates="schedule_gantt_items")
+
+
+# ── EXECUTION LOG ─────────────────────────────────────────────────────────────
+
+class ExecutionLogORM(Base):
+    __tablename__ = "execution_log"
+
+    execution_log_id        = Column(Integer, primary_key=True, autoincrement=True)
+    demand_manager_id       = Column(Integer, ForeignKey("demand_manager.demand_manager_id"), nullable=False)
+    technician_id           = Column(Integer, ForeignKey("technician.technician_id"), nullable=False)
+    execution_date          = Column(Date, nullable=False)
+    action                  = Column(String, nullable=False)
+    distance                = Column(Integer, nullable=False, default=0)
+    worked_hours            = Column(Float, nullable=False)
+
+    demand_manager          = relationship("DemandManagerORM", back_populates="execution_logs")

@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from typing import Optional
 from sqlalchemy.orm import Session
 from backend.app.database.orm_models import (
     CityORM, AnalystORM, CustomerORM,
@@ -11,7 +12,14 @@ from backend.app.models.project import Project
 from backend.app.models.technician import Technician
 from backend.app.models.demand import Demand
 from backend.app.models.demand_manager import DemandManager
-from typing import Optional
+
+from backend.app.database.orm_models import (
+    PlanningVersionORM, ScheduleItemORM, ScheduleGanttORM, ExecutionLogORM
+)
+from backend.app.models.planning_version import PlanningVersion
+from backend.app.models.schedule_item_persistent import ScheduleItem
+from backend.app.models.schedule_gantt import ScheduleGantt
+from backend.app.models.execution_log import ExecutionLog
 
 
 # ── CITY ──────────────────────────────────────────────────────────────────────
@@ -436,3 +444,293 @@ class DemandManagerRepository:
             travel_distance        = row.travel_distance,
             is_deleted             = row.is_deleted
         )
+
+# ── PLANNING VERSION ──────────────────────────────────────────────────────────
+ 
+class PlanningVersionRepository:
+ 
+    def __init__(self, db: Session):
+        self.db = db
+ 
+    def get_by_id(self, version_id: int) -> Optional[PlanningVersion]:
+        row = self.db.query(PlanningVersionORM).filter(
+            PlanningVersionORM.version_id == version_id).first()
+        return self._to_model(row) if row else None
+ 
+    def get_active_by_technician(self, technician_id: int) -> Optional[PlanningVersion]:
+        """Retorna a única versão ativa para um técnico."""
+        row = self.db.query(PlanningVersionORM).filter(
+            PlanningVersionORM.technician_id == technician_id,
+            PlanningVersionORM.is_active == True
+        ).first()
+        return self._to_model(row) if row else None
+ 
+    def get_all_by_technician(self, technician_id: int) -> list[PlanningVersion]:
+        """Retorna todas as versões (ativas e inativas) de um técnico."""
+        rows = self.db.query(PlanningVersionORM).filter(
+            PlanningVersionORM.technician_id == technician_id
+        ).order_by(PlanningVersionORM.created_at.desc()).all()
+        return [self._to_model(r) for r in rows]
+ 
+    def create(self, pv: PlanningVersion) -> PlanningVersion:
+        row = PlanningVersionORM(
+            technician_id = pv.technician_id,
+            created_at    = pv.created_at,
+            is_active     = pv.is_active
+        )
+        self.db.add(row)
+        self.db.commit()
+        self.db.refresh(row)
+        pv.version_id = row.version_id
+        return pv
+ 
+    def deactivate_all_by_technician(self, technician_id: int) -> None:
+        """Marca todas as versões ativas como inativas."""
+        self.db.query(PlanningVersionORM).filter(
+            PlanningVersionORM.technician_id == technician_id,
+            PlanningVersionORM.is_active == True
+        ).update({'is_active': False})
+        self.db.commit()
+ 
+    def _to_model(self, row: PlanningVersionORM) -> PlanningVersion:
+        return PlanningVersion(
+            version_id    = row.version_id,
+            technician_id = row.technician_id,
+            created_at    = row.created_at,
+            is_active     = row.is_active
+        )
+ 
+ 
+# ── SCHEDULE ITEM ─────────────────────────────────────────────────────────────
+ 
+class ScheduleItemRepository:
+ 
+    def __init__(self, db: Session):
+        self.db = db
+ 
+    def get_by_id(self, schedule_item_id: int) -> Optional[ScheduleItem]:
+        row = self.db.query(ScheduleItemORM).filter(
+            ScheduleItemORM.schedule_item_id == schedule_item_id).first()
+        return self._to_model(row) if row else None
+ 
+    def get_by_version(self, version_id: int) -> list[ScheduleItem]:
+        """Retorna todos os itens de um planejamento (versão)."""
+        rows = self.db.query(ScheduleItemORM).filter(
+            ScheduleItemORM.version_id == version_id
+        ).order_by(ScheduleItemORM.scheduled_date, ScheduleItemORM.action.desc()).all()
+        return [self._to_model(r) for r in rows]
+ 
+    def get_by_demand_manager(self, demand_manager_id: int, version_id: Optional[int] = None) -> list[ScheduleItem]:
+        """Retorna itens de um demand_manager. Se version_id fornecido, filtra por versão."""
+        query = self.db.query(ScheduleItemORM).filter(
+            ScheduleItemORM.demand_manager_id == demand_manager_id
+        )
+        if version_id:
+            query = query.filter(ScheduleItemORM.version_id == version_id)
+        rows = query.order_by(ScheduleItemORM.scheduled_date).all()
+        return [self._to_model(r) for r in rows]
+ 
+    def get_by_technician_and_version(self, technician_id: int, version_id: int) -> list[ScheduleItem]:
+        """Retorna itens de um técnico em uma versão específica."""
+        rows = self.db.query(ScheduleItemORM).filter(
+            ScheduleItemORM.technician_id == technician_id,
+            ScheduleItemORM.version_id == version_id
+        ).order_by(ScheduleItemORM.scheduled_date).all()
+        return [self._to_model(r) for r in rows]
+ 
+    def create(self, si: ScheduleItem) -> ScheduleItem:
+        row = ScheduleItemORM(
+            version_id        = si.version_id,
+            demand_manager_id = si.demand_manager_id,
+            technician_id     = si.technician_id,
+            scheduled_date    = si.scheduled_date,
+            action            = si.action,
+            worked_hours      = si.worked_hours,
+            distance          = si.distance
+        )
+        self.db.add(row)
+        self.db.commit()
+        self.db.refresh(row)
+        si.schedule_item_id = row.schedule_item_id
+        return si
+ 
+    def create_batch(self, items: list[ScheduleItem]) -> list[ScheduleItem]:
+        """Insere múltiplos ScheduleItem de uma vez (mais eficiente)."""
+        rows = [
+            ScheduleItemORM(
+                version_id        = si.version_id,
+                demand_manager_id = si.demand_manager_id,
+                technician_id     = si.technician_id,
+                scheduled_date    = si.scheduled_date,
+                action            = si.action,
+                worked_hours      = si.worked_hours,
+                distance          = si.distance
+            )
+            for si in items
+        ]
+        self.db.add_all(rows)
+        self.db.commit()
+        for i, row in enumerate(rows):
+            self.db.refresh(row)
+            items[i].schedule_item_id = row.schedule_item_id
+        return items
+ 
+    def _to_model(self, row: ScheduleItemORM) -> ScheduleItem:
+        return ScheduleItem(
+            schedule_item_id  = row.schedule_item_id,
+            version_id        = row.version_id,
+            demand_manager_id = row.demand_manager_id,
+            technician_id     = row.technician_id,
+            scheduled_date    = row.scheduled_date,
+            action            = row.action,
+            worked_hours      = row.worked_hours,
+            distance          = row.distance
+        )
+ 
+ 
+# ── SCHEDULE GANTT ────────────────────────────────────────────────────────────
+ 
+class ScheduleGanttRepository:
+ 
+    def __init__(self, db: Session):
+        self.db = db
+ 
+    def get_by_id(self, schedule_gantt_id: int) -> Optional[ScheduleGantt]:
+        row = self.db.query(ScheduleGanttORM).filter(
+            ScheduleGanttORM.schedule_gantt_id == schedule_gantt_id).first()
+        return self._to_model(row) if row else None
+ 
+    def get_by_version(self, version_id: int) -> list[ScheduleGantt]:
+        """Retorna todos os Gantt items de um planejamento (versão)."""
+        rows = self.db.query(ScheduleGanttORM).filter(
+            ScheduleGanttORM.version_id == version_id
+        ).order_by(ScheduleGanttORM.start_date).all()
+        return [self._to_model(r) for r in rows]
+ 
+    def get_by_technician_and_version(self, technician_id: int, version_id: int) -> list[ScheduleGantt]:
+        """Retorna Gantt items de um técnico em uma versão."""
+        rows = self.db.query(ScheduleGanttORM).filter(
+            ScheduleGanttORM.technician_id == technician_id,
+            ScheduleGanttORM.version_id == version_id
+        ).order_by(ScheduleGanttORM.start_date).all()
+        return [self._to_model(r) for r in rows]
+ 
+    def create(self, sg: ScheduleGantt) -> ScheduleGantt:
+        row = ScheduleGanttORM(
+            version_id        = sg.version_id,
+            demand_manager_id = sg.demand_manager_id,
+            technician_id     = sg.technician_id,
+            start_date        = sg.start_date,
+            finish_date       = sg.finish_date
+        )
+        self.db.add(row)
+        self.db.commit()
+        self.db.refresh(row)
+        sg.schedule_gantt_id = row.schedule_gantt_id
+        return sg
+ 
+    def create_batch(self, items: list[ScheduleGantt]) -> list[ScheduleGantt]:
+        """Insere múltiplos ScheduleGantt de uma vez."""
+        rows = [
+            ScheduleGanttORM(
+                version_id        = sg.version_id,
+                demand_manager_id = sg.demand_manager_id,
+                technician_id     = sg.technician_id,
+                start_date        = sg.start_date,
+                finish_date       = sg.finish_date
+            )
+            for sg in items
+        ]
+        self.db.add_all(rows)
+        self.db.commit()
+        for i, row in enumerate(rows):
+            self.db.refresh(row)
+            items[i].schedule_gantt_id = row.schedule_gantt_id
+        return items
+ 
+    def _to_model(self, row: ScheduleGanttORM) -> ScheduleGantt:
+        return ScheduleGantt(
+            schedule_gantt_id = row.schedule_gantt_id,
+            version_id        = row.version_id,
+            demand_manager_id = row.demand_manager_id,
+            technician_id     = row.technician_id,
+            start_date        = row.start_date,
+            finish_date       = row.finish_date
+        )
+ 
+ 
+# ── EXECUTION LOG ─────────────────────────────────────────────────────────────
+ 
+class ExecutionLogRepository:
+ 
+    def __init__(self, db: Session):
+        self.db = db
+ 
+    def get_by_id(self, execution_log_id: int) -> Optional[ExecutionLog]:
+        row = self.db.query(ExecutionLogORM).filter(
+            ExecutionLogORM.execution_log_id == execution_log_id).first()
+        return self._to_model(row) if row else None
+ 
+    def get_by_demand_manager(self, demand_manager_id: int) -> list[ExecutionLog]:
+        """Retorna todo o histórico de execução de uma demanda."""
+        rows = self.db.query(ExecutionLogORM).filter(
+            ExecutionLogORM.demand_manager_id == demand_manager_id
+        ).order_by(ExecutionLogORM.execution_date).all()
+        return [self._to_model(r) for r in rows]
+ 
+    def get_by_technician_and_date_range(self, technician_id: int, start_date, end_date) -> list[ExecutionLog]:
+        """Retorna execuções de um técnico dentro de um período."""
+        from datetime import date as date_type
+        rows = self.db.query(ExecutionLogORM).filter(
+            ExecutionLogORM.technician_id == technician_id,
+            ExecutionLogORM.execution_date >= start_date,
+            ExecutionLogORM.execution_date <= end_date
+        ).order_by(ExecutionLogORM.execution_date).all()
+        return [self._to_model(r) for r in rows]
+ 
+    def create(self, el: ExecutionLog) -> ExecutionLog:
+        row = ExecutionLogORM(
+            demand_manager_id = el.demand_manager_id,
+            technician_id     = el.technician_id,
+            execution_date    = el.execution_date,
+            action            = el.action,
+            distance          = el.distance,
+            worked_hours      = el.worked_hours
+        )
+        self.db.add(row)
+        self.db.commit()
+        self.db.refresh(row)
+        el.execution_log_id = row.execution_log_id
+        return el
+ 
+    def create_batch(self, items: list[ExecutionLog]) -> list[ExecutionLog]:
+        """Insere múltiplos ExecutionLog de uma vez."""
+        rows = [
+            ExecutionLogORM(
+                demand_manager_id = el.demand_manager_id,
+                technician_id     = el.technician_id,
+                execution_date    = el.execution_date,
+                action            = el.action,
+                distance          = el.distance,
+                worked_hours      = el.worked_hours
+            )
+            for el in items
+        ]
+        self.db.add_all(rows)
+        self.db.commit()
+        for i, row in enumerate(rows):
+            self.db.refresh(row)
+            items[i].execution_log_id = row.execution_log_id
+        return items
+ 
+    def _to_model(self, row: ExecutionLogORM) -> ExecutionLog:
+        return ExecutionLog(
+            execution_log_id  = row.execution_log_id,
+            demand_manager_id = row.demand_manager_id,
+            technician_id     = row.technician_id,
+            execution_date    = row.execution_date,
+            action            = row.action,
+            distance          = row.distance,
+            worked_hours      = row.worked_hours
+        )
+ 
