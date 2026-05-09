@@ -17,7 +17,7 @@ from backend.app.database.orm_models import (
     PlanningVersionORM, ScheduleItemORM, ScheduleGanttORM, ExecutionLogORM
 )
 from backend.app.models.planning_version import PlanningVersion
-from backend.app.models.schedule_item_persistent import ScheduleItem
+from backend.app.models.schedule_item_persistent import ScheduleItemPersistent as ScheduleItem
 from backend.app.models.schedule_gantt import ScheduleGantt
 from backend.app.models.execution_log import ExecutionLog
 

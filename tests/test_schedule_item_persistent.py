@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import date
 import pytest
-from backend.app.models.schedule_item_persistent import ScheduleItem
+from backend.app.models.schedule_item_persistent import ScheduleItemPersistent as ScheduleItem
 
 @pytest.fixture
 def valid_schedule_item():

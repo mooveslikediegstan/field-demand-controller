@@ -6,7 +6,7 @@ from typing import Optional
 VALID_ACTIONS = ["Deslocamento", "Prestacao de Servico"]
 
 @dataclass
-class ScheduleItem:
+class ScheduleItemPersistent:
     """
     Representa um bloco atômico de planejamento — um item por ação por dia.
     Resultado direto do SchedulePlanner persistido no banco.
