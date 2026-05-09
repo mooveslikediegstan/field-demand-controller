@@ -382,6 +382,13 @@ class DemandManagerRepository:
         row = self.db.query(DemandManagerORM).filter(
             DemandManagerORM.demand_manager_id == demand_manager_id).first()
         return self._to_model(row) if row else None
+    
+    def get_by_demand(self, demand_id: int) -> list[DemandManager]:
+        rows = self.db.query(DemandManagerORM).filter(
+            DemandManagerORM.demand_id == demand_id,
+            DemandManagerORM.is_deleted == False
+        ).all()
+        return [self._to_model(r) for r in rows]
 
     def get_by_technician(self, technician_id: int) -> list[DemandManager]:
         """Retorna todos os registros ativos de um técnico — base para montar a DemandQueue."""
@@ -391,6 +398,10 @@ class DemandManagerRepository:
         ).all()
         return [self._to_model(r) for r in rows]
 
+
+    
+    def get_by_technician_and_demand(demand_id):
+        pass
     def create(self, dm: DemandManager) -> DemandManager:
         row = DemandManagerORM(
             demand_id              = dm.demand_id,
