@@ -398,10 +398,6 @@ class DemandManagerRepository:
         ).all()
         return [self._to_model(r) for r in rows]
 
-
-    
-    def get_by_technician_and_demand(demand_id):
-        pass
     def create(self, dm: DemandManager) -> DemandManager:
         row = DemandManagerORM(
             demand_id              = dm.demand_id,

@@ -375,37 +375,29 @@ Todos seguem padrão: fixture `valid_*`, helper `make_*`, uma asserção por tes
 4. ✅ 4 novas tabelas para planejamento e execução
 5. ✅ 68 novos testes, todos passando
 6. ✅ Opção A implementada: replanejamento automático
+7. ✅ ScheduleService — orquestra o fluxo de planejamento
+8. ✅ DemandService — camada de lógica de demanda
+   - 10 testes passando
+   - 18 testes passando
+9. ✅ ExecutionService + ExecutionInput — testes passando
 
-### Próxima Fase [ TODO ]
-1. **ScheduleService** — orquestra o fluxo de planejamento
-   - Recebe fila reordenada
-   - Deativa versão anterior
-   - Cria nova versão
-   - Roda SchedulePlanner
-   - Persiste schedule_item e schedule_gantt atomicamente
-
-2. **DemandService** — camada de lógica de demanda
-   - CRUD de demands
-   - Validações de negócio
-   - Integração com DemandManager
-
-3. **Rotas FastAPI**
+1. **Rotas FastAPI**
    - `POST /api/technicians/{tech_id}/save-sequence` → triggers planejamento
    - `GET /api/technicians/{tech_id}/schedule` → retorna schedule_gantt
    - `GET /api/technicians/{tech_id}/planning` → retorna schedule_item
    - `POST /api/demands/{dm_id}/conclude` → abre tela de execução
    - `POST /api/execution-logs/` → salva horas reais
 
-4. **Schemas Pydantic**
+2. **Schemas Pydantic**
    - Request/response para cada rota
 
-5. **Interface Streamlit**
+3. **Interface Streamlit**
    - Tela de reordenamento de fila
    - Gantt interativo
    - Relatórios de execução
    - Dashboard de métricas
 
-6. **Deploy em nuvem**
+4. **Deploy em nuvem**
    - Railway ou Render
    - Documentação de deploy
 
