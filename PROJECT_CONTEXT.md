@@ -1,5 +1,5 @@
 # Gestão de Agenda Técnica
-> Arquivo de contexto para agentes de IA. Última atualização: 07/05/2026.
+> Arquivo de contexto para agentes de IA. Última atualização: 08/05/2026.
 > Itens marcados com `[ TODO ]` ainda não foram definidos.
 > Convenção: nomes de código em inglês, mensagens de erro em português.
 
@@ -25,12 +25,12 @@ Demand (DMD) → DemandManager/Fila (DMD_MGMT) → SchedulePlanner → Agenda di
 | Backend / API | FastAPI | Framework principal |
 | Servidor ASGI | Uvicorn | — |
 | Frontend | Streamlit | Fase inicial |
-| Banco de dados | PostgreSQL 16 | Obrigatório — multi-usuário |
+| Banco de dados | PostgreSQL 16 (local dev) / Railway ou Render (produção) | Obrigatório — multi-usuário |
 | ORM | SQLAlchemy 2.x | Padrão Repository |
-| Migrações | Alembic | — |
+| Migrações | Alembic | Configurado e funcionando |
 | Validação | Pydantic v2 | — |
 | Testes | pytest | TDD |
-| Containerização | Docker + Docker Compose | 3 containers |
+| Containerização | Docker | Apenas produção — dev local sem Docker |
 | Linguagem | Python 3.13 | |
 | SO (dev) | Windows 11 | PowerShell no VS Code |
 
@@ -58,7 +58,7 @@ Backend (FastAPI)
     ├── Services     → lógica de negócio e planejamento
     └── Repository   → acesso ao banco via SQLAlchemy
       ↓ SQL
-Banco de Dados (PostgreSQL 16)
+Banco de Dados (PostgreSQL)
 ```
 
 ---
@@ -67,11 +67,17 @@ Banco de Dados (PostgreSQL 16)
 
 ```
 field-demand-controller/
-├── .gitignore
+├── .gitignore                           (.env ignorado)
+├── .vscode/
+│   └── settings.json                   (Pylance: reportAttributeAccessIssue e reportArgumentType = none)
 ├── PROJECT_CONTEXT.md
+├── alembic.ini                          ✅
+├── migrations/                          ✅
+│   ├── env.py
+│   └── versions/
 ├── backend/
 │   ├── requirements.txt
-│   ├── Dockerfile                       [ TODO ]
+│   ├── Dockerfile                       [ TODO — apenas produção ]
 │   └── app/
 │       ├── main.py                      [ TODO ]
 │       ├── models/
@@ -88,9 +94,10 @@ field-demand-controller/
 │       │   ├── project.py               ✅
 │       │   └── analyst.py               ✅
 │       ├── database/
-│       │   ├── session.py               [ TODO ]
-│       │   ├── orm_models.py            [ TODO ]
-│       │   └── repository.py            [ TODO ]
+│       │   ├── session.py               ✅
+│       │   ├── orm_models.py            ✅
+│       │   ├── init_db.py               ✅
+│       │   └── repository.py            ✅
 │       ├── services/
 │       │   ├── demand_service.py        [ TODO ]
 │       │   └── schedule_service.py      [ TODO ]
@@ -116,31 +123,23 @@ field-demand-controller/
 
 ---
 
-## 5. Variáveis de Ambiente
+## 5. Variáveis de Ambiente (.env — nunca commitar)
 
-### Backend
-| Variável | Exemplo | Descrição |
-|---|---|---|
-| `DATABASE_URL` | `postgresql://admin:senha@banco:5432/agenda_db` | Connection string |
-| `SECRET_KEY` | `chave_jwt` | JWT [ TODO ] |
+```
+DB_USER=postgres
+DB_PASSWORD=sua_senha
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=agenda_db
+```
 
-### Banco (container)
-| Variável | Exemplo | Descrição |
-|---|---|---|
-| `POSTGRES_DB` | `agenda_db` | — |
-| `POSTGRES_USER` | `admin` | — |
-| `POSTGRES_PASSWORD` | `senha_segura` | — |
-
-### Frontend [ TODO ]
-| Variável | Exemplo | Descrição |
-|---|---|---|
-| `API_URL` | `http://backend:8000` | URL do backend |
+`session.py` usa `urllib.parse.quote_plus` para escapar caracteres especiais na senha.
 
 ---
 
-## 6. Models
+## 6. Models ✅ — todos concluídos com TDD
 
-### `City` ✅ — tabela `CITY`
+### `City` — tabela `city`
 | Campo | Tipo Python | Obrigatório | Regras |
 |---|---|---|---|
 | `city_id` | `Optional[int]` | Não | Auto-gerado pelo banco |
@@ -150,7 +149,39 @@ field-demand-controller/
 | `geolocation_lat` | `float` | Sim | Entre -90 e 90 |
 | `geolocation_lon` | `float` | Sim | Entre -180 e 180 |
 
-### `Technician` ✅ — tabela `TECH`
+### `Analyst` — tabela `analyst`
+| Campo | Tipo Python | Obrigatório | Regras |
+|---|---|---|---|
+| `analyst_id` | `Optional[int]` | Não | Auto-gerado pelo banco |
+| `analyst_name` | `str` | Sim | Não vazio |
+| `email` | `str` | Sim | Não vazio; normalizado para lowercase |
+| `contact` | `str` | Sim | Não vazio |
+| `creation_date` | `date` | Sim | — |
+| `status` | `str` | Sim | `"active"`, `"inactive"` |
+| `valid_to_date` | `Optional[date]` | Não | Deve ser > creation_date quando preenchido |
+
+### `Customer` — tabela `customer`
+| Campo | Tipo Python | Obrigatório | Regras |
+|---|---|---|---|
+| `customer_id` | `str` | Sim | Gerado manualmente; não vazio |
+| `customer_name` | `str` | Sim | Não vazio |
+| `short_name` | `str` | Sim | Não vazio |
+| `city_id` | `int` | Sim | FK para city |
+| `address` | `str` | Sim | Não vazio |
+| `segment` | `str` | Sim | `"Farm"`, `"Commercial"` |
+| `sub_segment` | `str` | Sim | `"Farm"`, `"Commercial"`, `"Feed"`, `"Fertilizer"`, `"Fuel"` |
+| `region` | `str` | Sim | `"MA/PI"`, `"TO/BA"`, `"MT"`, `"MG/GO"`, `"MS/SP"`, `"PR,SC,RS"` |
+
+### `Project` — tabela `project`
+City herdada do Customer — Project não tem city_id próprio.
+
+| Campo | Tipo Python | Obrigatório | Regras |
+|---|---|---|---|
+| `project_id` | `str` | Sim | Gerado manualmente; não vazio |
+| `project_name` | `str` | Sim | Não vazio |
+| `customer_id` | `str` | Sim | FK para customer |
+
+### `Technician` — tabela `technician`
 | Campo | Tipo Python | Obrigatório | Regras |
 |---|---|---|---|
 | `technician_id` | `Optional[int]` | Não | Auto-gerado pelo banco |
@@ -159,21 +190,21 @@ field-demand-controller/
 | `status` | `str` | Sim | `"ativo"`, `"inativo"` |
 | `dismiss_date` | `Optional[date]` | Não | Obrigatório se inativo |
 | `position` | `str` | Sim | `"Lider"`, `"Supervisor"`, `"Coordenador"` |
-| `base_location_city_id` | `int` | Sim | FK para City |
-| `current_location_city_id` | `int` | Sim | FK para City — usado como origem no SchedulePlanner |
-| `daily_capacity` | `float` | Sim | Horas/dia > 0 |
+| `base_location_city_id` | `int` | Sim | FK para city |
+| `current_location_city_id` | `int` | Sim | FK para city — origem no SchedulePlanner |
+| `daily_capacity` | `float` | Sim | > 0 |
 
-### `Demand` ✅ — tabela `DMD`
+### `Demand` — tabela `demand`
 | Campo | Tipo Python | Obrigatório | Regras |
 |---|---|---|---|
 | `demand_id` | `Optional[int]` | Não | Auto-gerado pelo banco |
 | `demand_title` | `str` | Sim | Não vazio |
 | `problem_description` | `str` | Sim | Não vazio |
 | `request_date` | `date` | Sim | — |
-| `responsible_id` | `int` | Sim | FK para Analyst |
-| `project_id` | `str` | Sim | FK para Project |
+| `responsible_id` | `int` | Sim | FK para analyst |
+| `project_id` | `str` | Sim | FK para project |
 | `estimated_time` | `float` | Sim | > 0 |
-| `actual_time` | `Optional[float]` | Não | Preenchido após execução; validar > 0 na conclusão |
+| `actual_time` | `Optional[float]` | Não | Validar > 0 na conclusão via `conclude()` |
 | `technical_visit_reason` | `str` | Sim | Lista fechada |
 | `causal_sector` | `str` | Sim | Lista fechada |
 | `causal_area` | `str` | Sim | Dependente de causal_sector |
@@ -181,23 +212,17 @@ field-demand-controller/
 | `equipment` | `str` | Sim | Lista fechada |
 | `status` | `str` | Sim | `"Aberta"`, `"Em Andamento"`, `"Concluida"`, `"Cancelada"` |
 
-**Hierarquia de problemas:** dicionário `PROBLEM_HIERARCHY` dentro de `demand.py`.
-**Transição de estado pendente:** método `conclude()` deve validar `actual_time > 0`.
+**Hierarquia de problemas:** dicionário `PROBLEM_HIERARCHY` em `demand.py`.
+**Transição pendente:** método `conclude()` — valida `actual_time > 0`.
 
-**Valores válidos — `technical_visit_reason`:**
-`"Instalação"`, `"Manutenção Corretiva"`, `"Manutenção Preventiva"`, `"Punch-list"`, `"Reforma"`, `"Teste"`, `"Verificação"`, `"Visita Técnica"`, `"Outro"`
-
-**Valores válidos — `equipment`:**
-`"Secador / Fornalha"`, `"Máquina de Limpeza"`, `"Elevadores Agrícolas"`, `"Transportadores de Correia"`, `"Transportadores Helicoidais"`, `"Transportadores de Corrente"`, `"Canalização"`, `"Passarela / Torres"`, `"Rosca Varredora"`, `"Silos Planos / Elevados / Expedição / Aeração"`, `"Tulhas Metálicas"`, `"Hi Roller / Hi Life"`, `"Temp Stor"`, `"Batco"`
-
-### `DemandManager` ✅ — tabela `DMD_MGMT`
-Linked-list por técnico. `ServiceOrder` eliminado — referencia `Demand` diretamente.
+### `DemandManager` — tabela `demand_manager`
+Linked-list por técnico. `ServiceOrder` eliminado.
 
 | Campo | Tipo Python | Obrigatório | Regras |
 |---|---|---|---|
 | `demand_manager_id` | `Optional[int]` | Não | Auto-gerado pelo banco |
-| `demand_id` | `int` | Sim | FK para Demand |
-| `technician_id` | `int` | Sim | FK para Technician |
+| `demand_id` | `int` | Sim | FK para demand |
+| `technician_id` | `int` | Sim | FK para technician |
 | `next_demand_manager_id` | `Optional[int]` | Não | None = tail da fila |
 | `status` | `str` | Sim | `"Pendente"`, `"Em Execucao"`, `"Concluido"` |
 | `start_date` | `Optional[date]` | Não | Após execução |
@@ -206,42 +231,38 @@ Linked-list por técnico. `ServiceOrder` eliminado — referencia `Demand` diret
 | `travel_distance` | `Optional[float]` | Não | >= 0 |
 | `is_deleted` | `bool` | Sim | Soft delete, default False |
 
-### `DemandQueue` ✅ — objeto de domínio (não é tabela)
+### `DemandQueue` — objeto de domínio (não é tabela)
 | Campo | Tipo Python | Descrição |
 |---|---|---|
 | `technician_id` | `int` | Técnico dono da fila |
-| `head_id` | `Optional[int]` | ID do primeiro DemandManager a executar |
+| `head_id` | `Optional[int]` | ID do primeiro DemandManager |
 | `demands` | `list[DemandManager]` | Lista ordenada |
 
-Métodos:
-- `sort()` — reconstrói ordem via links a partir do `head_id`
-- `rebuild_links()` — recalcula `next_demand_manager_id` e atualiza `head_id`
-- `append(dm)` — adiciona ao final e chama `rebuild_links()`
+Métodos: `sort()`, `rebuild_links()`, `append(dm)`
 
-### `ScheduleInput` ✅ — objeto de domínio (não é tabela)
-Dados resolvidos pelo `ScheduleService` antes de entregar ao `SchedulePlanner`.
-
+### `ScheduleInput` — objeto de domínio (não é tabela)
 | Campo | Tipo Python | Descrição |
 |---|---|---|
-| `demand_manager_id` | `int` | ID do registro na fila |
-| `demand_id` | `int` | FK para Demand |
+| `demand_manager_id` | `int` | — |
+| `demand_id` | `int` | — |
 | `estimated_time` | `float` | Horas de trabalho |
-| `city_lat` | `float` | Resolvida via Demand → Project → Customer → City |
-| `city_lon` | `float` | Resolvida via Demand → Project → Customer → City |
+| `city_lat` | `float` | Resolvida via Demand→Project→Customer→City |
+| `city_lon` | `float` | Resolvida via Demand→Project→Customer→City |
 
-### `ScheduleItem` ✅ — objeto de domínio (não é tabela)
+### `ScheduleItem` — objeto de domínio (não é tabela) + futura tabela `schedule_item`
 | Campo | Tipo Python | Descrição |
 |---|---|---|
-| `demand_manager_id` | `int` | FK para DemandManager |
-| `technician_id` | `int` | FK para Technician |
+| `demand_manager_id` | `int` | — |
+| `technician_id` | `int` | — |
 | `scheduled_date` | `date` | Data do bloco |
 | `action` | `str` | `"Deslocamento"` ou `"Prestacao de Servico"` |
 | `work_time` | `float` | Horas do bloco |
-| `sequence_position` | `int` | Posição global na sequência |
+| `sequence_position` | `int` | Posição global |
 | `distance` | `int` | Km — só no primeiro item de deslocamento |
+| `is_deleted` | `bool` | Soft delete ao replanejar |
 
-### `SchedulePlanner` ✅ — objeto de domínio (não é tabela)
-Planejamento **atômico e contínuo** — gera um `ScheduleItem` por bloco de horas.
+### `SchedulePlanner` — objeto de domínio (não é tabela)
+Planejamento atômico e contínuo — um `ScheduleItem` por bloco de horas.
 
 | Campo | Tipo Python | Descrição |
 |---|---|---|
@@ -253,106 +274,103 @@ Planejamento **atômico e contínuo** — gera um `ScheduleItem` por bloco de ho
 | `origin_lon` | `float` | current_location do técnico |
 | `scheduled_items` | `list[ScheduleItem]` | Resultado do plan() |
 
-Método `plan(demand_inputs)`:
-1. Para cada `ScheduleInput`: calcula deslocamento via `geo_utils.distance_between_coordinates()`
-2. Consome deslocamento em fatias diárias (dias úteis seg-sex) → gera itens `"Deslocamento"`
-3. Consome trabalho em fatias diárias → gera itens `"Prestacao de Servico"`
-4. Avança dia só quando `remaining_hours <= 0`
-5. Primeira demanda do dia sempre é alocada mesmo se exceder capacidade
-
-### `geo_utils` ✅ — utilitário
+### `geo_utils` — utilitário
 - `distance_between_coordinates(lat_o, lon_o, lat_d, lon_d, apply_correction=True)`
-- Fórmula Haversine + fator de correção 1.35 (aproximação rota/linha reta)
-- Futuramente: substituir por API Google Maps / similar
-
-### `Customer` [ TODO ] — tabela `CUSTOMER`
-| Campo | Tipo Python | Obrigatório | Regras |
-|---|---|---|---|
-| `customer_id` | `str` | Sim | Não vazio |
-| `customer_name` | `str` | Sim | Não vazio |
-| `short_name` | `str` | Sim | Não vazio |
-| `city_id` | `int` | Sim | FK para City — cidade do cliente |
-| `address` | `str` | [ TODO ] | — |
-| `segment` | `str` | [ TODO ] | — |
-| `sub_segment` | `str` | [ TODO ] | — |
-| `region` | `str` | [ TODO ] | — |
-
-### `Project` [ TODO ] — tabela `PROJECT`
-City herdada do Customer (Project não tem city_id próprio).
-
-| Campo | Tipo Python | Obrigatório | Regras |
-|---|---|---|---|
-| `project_id` | `str` | Sim | Não vazio |
-| `project_name` | `str` | Sim | Não vazio |
-| `customer_id` | `str` | Sim | FK para Customer |
-
-### `Analyst` [ TODO ] — tabela `ANL`
-Campos a definir na próxima sessão.
+- Haversine + fator 1.35
+- Futuro: substituir por API Google Maps
 
 ---
 
-## 7. Tabelas
+## 7. Banco de Dados
 
+### Tabelas existentes (criadas via `init_db.py`)
 | Tabela | Model | Status |
 |---|---|---|
-| `CITY` | `City` | ✅ |
-| `TECH` | `Technician` | ✅ |
-| `DMD` | `Demand` | ✅ |
-| `DMD_MGMT` | `DemandManager` | ✅ |
-| `CUSTOMER` | `Customer` | [ TODO ] |
-| `PROJECT` | `Project` | [ TODO ] |
-| `ANL` | `Analyst` | [ TODO ] |
+| `city` | `City` | ✅ |
+| `analyst` | `Analyst` | ✅ |
+| `customer` | `Customer` | ✅ |
+| `project` | `Project` | ✅ |
+| `technician` | `Technician` | ✅ |
+| `demand` | `Demand` | ✅ |
+| `demand_manager` | `DemandManager` | ✅ |
+
+### Tabelas a criar (via Alembic migration)
+| Tabela | Descrição | Status |
+|---|---|---|
+| `schedule_item` | Planejamento atômico persistido — soft-delete ao replanejar | [ TODO ] |
+| `schedule_gantt` | Planejamento agrupado (start/finish por demanda/técnico) para Gantt — soft-delete ao replanejar | [ TODO ] |
+| `execution_log` | Histórico real de execução — permanente, nunca soft-deleted | [ TODO ] |
 
 ---
 
-## 8. Fluxo Principal
+## 8. Novas Funcionalidades Pendentes de Definição
 
-```
-1. Analista cadastra Demand
-2. Analista atribui Demand a técnicos → cria DemandManager por técnico
-3. DemandManager vai ao final da fila (append)
-4. Analista reordena fila → rebuild_links recalcula links
-5. ScheduleService resolve coordenadas → monta lista de ScheduleInput
-6. SchedulePlanner.plan() gera agenda atômica dia-a-dia
-```
+### 8.1 Execução Real (`execution_log`)
+Input manual do técnico dia a dia — o que de fato aconteceu.
+**Perguntas em aberto:**
+- Um registro por dia por técnico por demanda, com horas de deslocamento e serviço separadas?
+- A tela gera cards por dia (igual ao VBA) baseado em `start_date` e `finish_date` informados pelo usuário?
+
+### 8.2 Planejamento Atômico Persistido (`schedule_item`)
+Resultado do `SchedulePlanner` salvo no banco.
+- Soft-delete ao replanejar — só o último planejamento é válido
+- **Pergunta em aberto:** abordagem mais eficiente que soft-delete? (ex: tabela com `planning_version_id`)
+
+### 8.3 Planejamento Agrupado (`schedule_gantt`)
+Derivado do planejamento atômico — `start_date` e `finish_date` por demanda/técnico.
+- **Pergunta em aberto:** calculado automaticamente ou ajustável manualmente?
 
 ---
 
-## 9. Decisões de Design
+## 9. Repository Layer ✅
+
+`backend/app/database/repository.py` — CRUD completo para todos os models:
+- `CityRepository`
+- `AnalystRepository`
+- `CustomerRepository`
+- `ProjectRepository`
+- `TechnicianRepository`
+- `DemandRepository`
+- `DemandManagerRepository`
+
+Padrão: `get_by_id`, `get_all` / `get_all_active`, `create`, `update`, `_to_model`
+`DemandManagerRepository` tem `soft_delete()` e `get_by_technician()` para montar `DemandQueue`.
+
+---
+
+## 10. Decisões de Design
 
 | Decisão | Motivo |
 |---|---|
 | PostgreSQL obrigatório | 2-8 usuários simultâneos |
-| Fila como linked-list | Reordenação eficiente; mantém histórico |
-| `ServiceOrder` eliminado | Sem valor — DemandManager referencia Demand diretamente |
-| `DemandQueue`/`SchedulePlanner` como objetos de domínio | Construídos em memória — não persistidos |
+| Dev local sem Docker | Virtualização desabilitada na máquina de dev; Docker apenas em produção |
+| Deploy em nuvem (Railway/Render) | Sem acesso admin na empresa — usuário acessa via navegador |
+| Fila como linked-list | Reordenação eficiente |
+| `ServiceOrder` eliminado | DemandManager referencia Demand diretamente |
+| `DemandQueue`/`SchedulePlanner` como objetos de domínio | Construídos em memória |
 | Soft delete (`is_deleted`) | Mantém histórico |
 | `SchedulePlanner` recebe `ScheduleInput` resolvido | Planejador não conhece cadeia Demand→Project→Customer→City |
-| Planejamento atômico e contínuo | Um ScheduleItem por bloco de horas — permite Gantt e persistência granular |
-| `current_location_city_id` do Technician como origem | Permite "teletransporte" para corrigir localização sem histórico |
-| Distância via Haversine + fator 1.35 | Aproximação suficiente; API externa planejada para versão futura |
+| Planejamento atômico e contínuo | Um ScheduleItem por bloco — permite Gantt e soma de horas pendentes |
+| `current_location_city_id` como origem | Permite corrigir localização do técnico manualmente |
+| Distância via Haversine + 1.35 | Aproximação suficiente; API externa no futuro |
+| `customer_id` e `project_id` como string manual | Avaliar migração para int auto-gerado com prefixo na UI [ TODO ] |
 
 ---
 
-## 10. Próximos Passos
+## 11. Próximos Passos
 
-1. ✅ Repositório Git + estrutura de pastas
-2. ✅ `City` com TDD
-3. ✅ `Technician` com TDD
-4. ✅ `Demand` com TDD
-5. ✅ `DemandManager` com TDD
-6. ✅ `DemandQueue` com TDD
-7. ✅ `geo_utils` com TDD
-8. ✅ `SchedulePlanner` com TDD
-9. ✅ `Customer` com TDD
-10. ✅ `Project` com TDD
-11. ✅ `Analyst` com TDD
-12. Criar ORM models + SQLAlchemy + PostgreSQL
-13. Implementar Repositories e Services (incluindo `ScheduleService`)
-14. Criar rotas FastAPI
-15. Configurar Docker Compose
-16. Criar interface Streamlit
+1. ✅ Todos os models com TDD
+2. ✅ PostgreSQL local + SQLAlchemy + Alembic
+3. ✅ ORM models + Repository layer
+4. Responder perguntas em aberto da seção 8 ← **próxima sessão começa aqui**
+5. Criar tabelas `schedule_item`, `schedule_gantt`, `execution_log` via Alembic migration
+6. Implementar `DemandService`
+7. Implementar `ScheduleService`
+8. Criar rotas FastAPI
+9. Criar Schemas Pydantic
+10. Criar interface Streamlit
+11. Deploy em nuvem (Railway ou Render)
 
 ---
 
-*Última atualização: 07/05/2026 — SchedulePlanner concluído com planejamento atômico*
+*Última atualização: 08/05/2026 — Repository layer concluído; novas funcionalidades identificadas e pendentes de definição*
