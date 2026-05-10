@@ -31,25 +31,25 @@ class DemandService:
         self.get_demand(demand.demand_id)
         return self.demand_repo.update(demand)
 
-def cancel_demand(self, demand_id: int) -> Demand:
-    demand = self.get_demand(demand_id)
-    if demand.status == "Concluída":
-        raise ValueError("Não é possível cancelar uma demanda já concluída")
-    if demand.status == "Cancelada":
-        raise ValueError("Demanda já está cancelada")
+    def cancel_demand(self, demand_id: int) -> Demand:
+        demand = self.get_demand(demand_id)
+        if demand.status == "Concluída":
+            raise ValueError("Não é possível cancelar uma demanda já concluída")
+        if demand.status == "Cancelada":
+            raise ValueError("Demanda já está cancelada")
 
-    active_dms = self.dm_repo.get_by_demand(demand_id)
-    if active_dms:
-        raise ValueError("Demanda ainda possui técnicos alocados. Desaloque-os antes de cancelar.")
+        active_dms = self.dm_repo.get_by_demand(demand_id)
+        if active_dms:
+            raise ValueError("Demanda ainda possui técnicos alocados. Desaloque-os antes de cancelar.")
 
-    try:
-        demand.status = "Cancelada"
-        self.demand_repo.update(demand)
-        self.db.commit()
-        return demand
-    except Exception:
-        self.db.rollback()
-        raise
+        try:
+            demand.status = "Cancelada"
+            self.demand_repo.update(demand)
+            self.db.commit()
+            return demand
+        except Exception:
+            self.db.rollback()
+            raise
 
     # ── ALOCAÇÃO ──────────────────────────────────────────────────────────────
 
