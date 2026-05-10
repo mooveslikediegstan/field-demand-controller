@@ -31,26 +31,25 @@ class DemandService:
         self.get_demand(demand.demand_id)
         return self.demand_repo.update(demand)
 
-    def cancel_demand(self, demand_id: int) -> Demand:
-        demand = self.get_demand(demand_id)
-        if demand.status == "Concluída":
-            raise ValueError("Não é possível cancelar uma demanda já concluída")
-        if demand.status == "Cancelada":
-            raise ValueError("Demanda já está cancelada")
+def cancel_demand(self, demand_id: int) -> Demand:
+    demand = self.get_demand(demand_id)
+    if demand.status == "Concluída":
+        raise ValueError("Não é possível cancelar uma demanda já concluída")
+    if demand.status == "Cancelada":
+        raise ValueError("Demanda já está cancelada")
 
-        # Soft-delete em todos os DemandManagers ativos
-        active_dms = self.dm_repo.get_by_demand(demand_id)
-        try:
-            for dm in active_dms:
-                self.dm_repo.soft_delete(dm.demand_manager_id)
+    active_dms = self.dm_repo.get_by_demand(demand_id)
+    if active_dms:
+        raise ValueError("Demanda ainda possui técnicos alocados. Desaloque-os antes de cancelar.")
 
-            demand.status = "Cancelada"
-            self.demand_repo.update(demand)
-            self.db.commit()
-            return demand
-        except Exception:
-            self.db.rollback()
-            raise
+    try:
+        demand.status = "Cancelada"
+        self.demand_repo.update(demand)
+        self.db.commit()
+        return demand
+    except Exception:
+        self.db.rollback()
+        raise
 
     # ── ALOCAÇÃO ──────────────────────────────────────────────────────────────
 
@@ -71,6 +70,17 @@ class DemandService:
                 technician_id = technician_id,
                 status        = "Pendente",
             ))
+            current_queue = self.dm_repo.get_by_technician(technician_id)
+            tail = next(
+                (d for d in current_queue if d.next_demand_manager_id is None
+                and d.demand_manager_id != dm.demand_manager_id),
+                None
+            )
+            if tail:
+                tail.next_demand_manager_id = dm.demand_manager_id
+                self.dm_repo.update(tail)
+
+
             demand.status = "Em Andamento"
             self.demand_repo.update(demand)
             self.db.commit()
@@ -94,7 +104,17 @@ class DemandService:
         others = [dm for dm in all_dms if dm.technician_id != technician_id]
 
         try:
+            fila = self.dm_repo.get_by_technician(technician_id)
+            previous = next(
+                (d for d in fila if d.next_demand_manager_id == target.demand_manager_id),
+                None
+            )    
+
             self.dm_repo.soft_delete(target.demand_manager_id)
+
+            if previous:
+                previous.next_demand_manager_id = target.next_demand_manager_id
+                self.dm_repo.update(previous)
 
             if not others:
                 demand.status = "Aberta"

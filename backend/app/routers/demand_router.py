@@ -17,6 +17,7 @@ from backend.app.schemas.demand_manager_schemas import (
     ConclusionDataResponse,
     ConcludeRequest,
 )
+from backend.app.services.schedule_service import ScheduleService
 
 router = APIRouter(prefix="/api/demands", tags=["Demands"])
 
@@ -102,9 +103,16 @@ def allocate_technician(demand_id: int, payload: AllocateRequest, db: Session = 
 
 @router.delete("/{demand_id}/allocate/{technician_id}", response_model=DemandResponse)
 def deallocate_technician(demand_id: int, technician_id: int, db: Session = Depends(get_db)):
-    service = DemandService(db)
+    demand_service   = DemandService(db)
+    schedule_service = ScheduleService(db)
     try:
-        return service.deallocate_technician(demand_id, technician_id)
+        result = demand_service.deallocate_technician(demand_id, technician_id)
+
+        remaining_queue = demand_service.dm_repo.get_by_technician(technician_id)
+        if remaining_queue:
+            schedule_service.replan(technician_id)
+
+        return result
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
 
