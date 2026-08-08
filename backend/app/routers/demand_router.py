@@ -46,6 +46,16 @@ def create_demand(payload: DemandCreateRequest, db: Session = Depends(get_db)):
         return service.create_demand(demand)
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
+    
+# ── SELECIONAR DEMANDA ─────────────────────────────────────────────────────────────
+
+@router.get("/{demand_id}", response_model=DemandResponse)
+def get_demand(demand_id: int, db: Session = Depends(get_db)):
+    service = DemandService(db)
+    try:
+        return service.get_demand(demand_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 # ── ATUALIZAR DEMANDA ─────────────────────────────────────────────────────────

@@ -1,7 +1,7 @@
 # frontend/app/api_client.py
 import requests
 
-BASE_URL = "http://localhost:8501/api"
+BASE_URL = "http://localhost:8000/api"
 
 # ── DEMANDS ───────────────────────────────────────────────────────────────────
 
