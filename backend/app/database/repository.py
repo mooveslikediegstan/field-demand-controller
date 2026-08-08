@@ -308,6 +308,10 @@ class DemandRepository:
     def get_by_status(self, status: str) -> list[Demand]:
         rows = self.db.query(DemandORM).filter(DemandORM.status == status).all()
         return [self._to_model(r) for r in rows]
+    
+    def get_all(self) -> list[Demand]:
+        rows = self.db.query(DemandORM).all()
+        return [self._to_model(r) for r in rows]
 
     def get_by_project(self, project_id: str) -> list[Demand]:
         rows = self.db.query(DemandORM).filter(DemandORM.project_id == project_id).all()

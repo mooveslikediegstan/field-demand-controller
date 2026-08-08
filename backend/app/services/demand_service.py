@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import date
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from backend.app.models.demand import Demand
 from backend.app.models.demand_manager import DemandManager
@@ -26,6 +27,11 @@ class DemandService:
         if not demand:
             raise ValueError(f"Demanda {demand_id} não encontrada")
         return demand
+    
+    def list_demands(self, status: Optional[str] = None) -> list[Demand]:
+        if status:
+            return self.demand_repo.get_by_status(status)
+        return self.demand_repo.get_all()
 
     def update_demand(self, demand: Demand) -> Demand:
         self.get_demand(demand.demand_id)

@@ -2,6 +2,7 @@
 from datetime import date
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from typing import Optional
 
 from backend.app.database.session import get_db
 from backend.app.models.demand import Demand
@@ -56,6 +57,16 @@ def get_demand(demand_id: int, db: Session = Depends(get_db)):
         return service.get_demand(demand_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    
+
+@router.get("/", response_model=list[DemandResponse])
+def list_demands(status: Optional[str] = None, db: Session = Depends(get_db)):
+    service = DemandService(db)
+    try:
+        return service.list_demands(status)
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    
 
 
 # ── ATUALIZAR DEMANDA ─────────────────────────────────────────────────────────
