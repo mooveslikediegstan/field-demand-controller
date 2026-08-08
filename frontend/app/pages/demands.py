@@ -3,13 +3,14 @@ import streamlit as st
 import sys, os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import api_client as api
-
+from typing import Optional
 from constants import PROBLEM_HIERARCHY, VALID_EQUIPMENTS, VALID_TECHNICAL_REASONS, DEMAND_STATUS
+
 
 def show():
     st.title("Demandas")
 
-    tab_criar, tab_buscar, tab_listar = st.tabs(["Criar Demanda", "Buscar / Editar", "Listar Demandas"])
+    tab_criar, tab_buscar, tab_listar = st.tabs(["Criar Demanda", "Buscar por ID", "Listar"])
 
     # ── CRIAR ─────────────────────────────────────────────────────────────────
     with tab_criar:
@@ -49,20 +50,20 @@ def show():
             except Exception as e:
                 st.error(f"Erro: {e}")
 
-    # ── BUSCAR / EDITAR ───────────────────────────────────────────────────────
+    # ── BUSCAR POR ID ─────────────────────────────────────────────────────────
     with tab_buscar:
-        st.subheader("Buscar Demanda")
+        st.subheader("Buscar Demanda por ID")
 
         demand_id = st.number_input("ID da Demanda", min_value=1, step=1, key="buscar_id")
         if st.button("Buscar"):
             try:
                 d = api.get_demand(int(demand_id))
-                st.session_state["demand_encontrada"] = d
+                st.session_state["demand_unica"] = d
             except Exception as e:
                 st.error(f"Erro: {e}")
 
-        if "demand_encontrada" in st.session_state:
-            d = st.session_state["demand_encontrada"]
+        if "demand_unica" in st.session_state:
+            d = st.session_state["demand_unica"]
             st.json(d)
 
             if d["status"] not in ["Concluída", "Cancelada"]:
@@ -70,22 +71,22 @@ def show():
                     try:
                         api.cancel_demand(d["demand_id"])
                         st.success("Demanda cancelada.")
-                        del st.session_state["demand_encontrada"]
+                        del st.session_state["demand_unica"]
                     except Exception as e:
                         st.error(f"Erro: {e}")
 
-    # ── LISTAR ───────────────────────────────────────────────────────                        
+    # ── LISTAR ────────────────────────────────────────────────────────────────
     with tab_listar:
         st.subheader("Listar Demandas")
 
-        status = st.selectbox("Status",DEMAND_STATUS)
+        status = st.selectbox("Status", DEMAND_STATUS)
         if st.button("Listar"):
             try:
                 d = api.list_demands(status)
-                st.session_state["demand_encontrada"] = d
+                st.session_state["demand_lista"] = d
             except Exception as e:
                 st.error(f"Erro: {e}")
 
-        if "demand_encontrada" in st.session_state:
-            d = st.session_state["demand_encontrada"]
-            st.json(d)                     
+        if "demand_lista" in st.session_state:
+            for d in st.session_state["demand_lista"]:
+                st.json(d)
