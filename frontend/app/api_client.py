@@ -1,17 +1,24 @@
 # frontend/app/api_client.py
 import requests
+from typing import Optional
 
 BASE_URL = "http://localhost:8000/api"
 
 # ── DEMANDS ───────────────────────────────────────────────────────────────────
+
+def create_demand(payload: dict) -> dict:
+    r = requests.post(f"{BASE_URL}/demands/", json=payload)
+    r.raise_for_status()
+    return r.json()
 
 def get_demand(demand_id: int) -> dict:
     r = requests.get(f"{BASE_URL}/demands/{demand_id}")
     r.raise_for_status()
     return r.json()
 
-def create_demand(payload: dict) -> dict:
-    r = requests.post(f"{BASE_URL}/demands/", json=payload)
+def list_demands(status: Optional[str] = None) -> list:
+    params = {"status": status} if status else {}
+    r = requests.get(f"{BASE_URL}/demands/", params=params)
     r.raise_for_status()
     return r.json()
 

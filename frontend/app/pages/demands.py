@@ -4,12 +4,12 @@ import sys, os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import api_client as api
 
-from constants import PROBLEM_HIERARCHY, VALID_EQUIPMENTS, VALID_TECHNICAL_REASONS
+from constants import PROBLEM_HIERARCHY, VALID_EQUIPMENTS, VALID_TECHNICAL_REASONS, DEMAND_STATUS
 
 def show():
     st.title("Demandas")
 
-    tab_criar, tab_buscar = st.tabs(["Criar Demanda", "Buscar / Editar"])
+    tab_criar, tab_buscar, tab_listar = st.tabs(["Criar Demanda", "Buscar / Editar", "Listar Demandas"])
 
     # ── CRIAR ─────────────────────────────────────────────────────────────────
     with tab_criar:
@@ -73,3 +73,19 @@ def show():
                         del st.session_state["demand_encontrada"]
                     except Exception as e:
                         st.error(f"Erro: {e}")
+
+    # ── LISTAR ───────────────────────────────────────────────────────                        
+    with tab_listar:
+        st.subheader("Listar Demandas")
+
+        status = st.selectbox("Status",DEMAND_STATUS)
+        if st.button("Listar"):
+            try:
+                d = api.list_demands(status)
+                st.session_state["demand_encontrada"] = d
+            except Exception as e:
+                st.error(f"Erro: {e}")
+
+        if "demand_encontrada" in st.session_state:
+            d = st.session_state["demand_encontrada"]
+            st.json(d)                     
