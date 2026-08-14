@@ -2,10 +2,13 @@
 import requests
 from typing import Optional
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_URL = os.getenv("API_URL", "http://localhost:8000/api")
 
-# ── DEMANDS ───────────────────────────────────────────────────────────────────
+# ── DEMANDS ────────────────────────────s───────────────────────────────────────
 
 def create_demand(payload: dict) -> dict:
     r = requests.post(f"{BASE_URL}/demands/", json=payload)
